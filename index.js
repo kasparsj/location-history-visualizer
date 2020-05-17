@@ -1,11 +1,5 @@
 ( function ( $, L, prettySize ) {
-		var map, heat,
-			heatOptions = {
-				tileOpacity: 1,
-				heatOpacity: 1,
-				radius: 25,
-				blur: 15
-			};
+		var map;
 
 		// Updates currentStatus field during data loading
 		function status( message ) {
@@ -48,8 +42,6 @@
 	    // Google Analytics event - heatmap upload file
 	    ga('send', 'event', 'Heatmap', 'upload', undefined, file.size);
 
-			heat = L.heatLayer( [], heatOptions ).addTo( map );
-
 			var type;
 
 			try {
@@ -70,6 +62,8 @@
 
 			var SCALAR_E7 = 0.0000001; // Since Google Takeout stores latlngs as integers
 			var latlngs = [];
+			var polyline = L.polyline(latlngs, {color: 'red'}).addTo(map);
+
 
 			// Use Oboe to stream Google Takeout data if file is JSON
 			var os = new oboe();
@@ -85,8 +79,7 @@
 				return oboe.drop;
 			} ).done( function () {
 				status( 'Generating map...' );
-				heat._latlngs = latlngs;
-				heat.redraw();
+				polyline.setLatLngs(latlngs);
 
 				stageThree(  /* numberProcessed */ latlngs.length );
 			} );
@@ -124,54 +117,12 @@
 	        .always( function () {
 	          $( 'body' ).addClass( 'map-active' );
 	          $done.fadeOut();
-	          activateControls();
 	        } );
 	      } else {
 	        alert( 'Please enter a valid email address to proceed.' );
 	      }
 	    } );
 
-			function activateControls () {
-				var $tileLayer = $( '.leaflet-tile-pane' ),
-					$heatmapLayer = $( '.leaflet-heatmap-layer' ),
-					originalHeatOptions = $.extend( {}, heatOptions ); // for reset
-
-				// Update values of the dom elements
-				function updateInputs () {
-					var option;
-					for ( option in heatOptions ) {
-						if ( heatOptions.hasOwnProperty( option ) ) {
-							document.getElementById( option ).value = heatOptions[option];
-						}
-					}
-				}
-
-				updateInputs();
-
-				$( '.control' ).change( function () {
-					switch ( this.id ) {
-						case 'tileOpacity':
-							$tileLayer.css( 'opacity', this.value );
-							break;
-						case 'heatOpacity':
-							$heatmapLayer.css( 'opacity', this.value );
-							break;
-						default:
-							heatOptions[ this.id ] = Number( this.value );
-							heat.setOptions( heatOptions );
-							break;
-					}
-				} );
-
-				$( '#reset' ).click( function () {
-					$.extend( heatOptions, originalHeatOptions );
-					updateInputs();
-					heat.setOptions( heatOptions );
-					// Reset opacity too
-					$heatmapLayer.css( 'opacity', originalHeatOptions.heatOpacity );
-					$tileLayer.css( 'opacity', originalHeatOptions.tileOpacity );
-				} );
-			}
 		}
 
 		/*
