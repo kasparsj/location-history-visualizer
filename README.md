@@ -10,11 +10,14 @@ It works directly in your web browser &ndash; no software to download, no packag
 
 ## Packages used
 * [leaflet.js](http://leafletjs.com/), for rendering the interactive map
-* [leaflet.heat](https://github.com/Leaflet/Leaflet.heat), for rendering the heatmap overlay
 * [filestream](https://github.com/DamonOehlman/filestream), for dealing with gigantic Google Takeout files
 * [oboe.js](http://oboejs.com), for processing said gigantic files
 * [browserify](http://browserify.org/), for helping filestream  work properly in the browser
 
+
+## Credit
+
+Based on the 2014 program [location-history-visualizer](https://github.com/theopolisme/location-history-visualizer), developed by Theopolisme <theopolismewiki@gmail.com>.
 
 ## License
 
