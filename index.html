@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.css"/>
 </head>
 <body>
+
 <div class="visualizer">
     <!-- Pure CSS Fork me on GitHub -->
     <!-- https://codepo8.github.io/css-fork-on-github-ribbon/ -->
@@ -26,6 +27,11 @@
                 <p>Welcome to <b>Location History Visualizer</b>, a tool for visualizing your collected Google <a href="https://google.com/locationhistory" target="_blank">Location History</a> data with heatmaps. <i>Don't worry&mdash;all processing and visualization happens directly on your computer, so rest assured that nobody is able to access your Location History but you... and Google, of course.</i></p>
                 <p>To start off, you'll need to go to <a href="https://google.com/takeout" target="_blank">Google Takeout</a> to download your Location History data: on that page, deselect everything except Location History by clicking "Select none" and then reselecting "Location History". Then hit "Next" and, finally, click "Create archive". Once the archive has been created, click "Download". Unzip the downloaded file, and open the "Location History" folder within. Then, <b>drag and drop <i>LocationHistory.json</i> from inside that folder onto this page.</b> Let the visualization begin!</p>
                 <p class="fallback">Alternatively, select your <b>LocationHistory.json</b> file directly: <input name="file" type="file" id="file"></input></p>
+                <hr>
+                <p>You can also view only the location history <b>between two dates</b>:<br/>
+                	From: <input type="text" id="fromDate"> - To: <input type="text" id="toDate">
+                </p>
+                <hr>
                 <p class="credit">A <a target="_blank" href="https://github.com/operte/location-history-visualizer">fork</a> of <a target="_blank" href="https://github.com/theopolisme/location-history-visualizer">this</a> open source project.</p>
             </div>
 
@@ -62,6 +68,7 @@
 </div>
 
 <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+<script src="http://code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/3.8.4/dropzone.min.js"></script>
 <script src="lib/prettysize.js"></script>

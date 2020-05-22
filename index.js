@@ -5,6 +5,11 @@
 		function status( message ) {
 			$( '#currentStatus' ).text( message );
 		}
+		
+		$(function() {
+			$("#fromDate").datepicker();
+			$("#toDate").datepicker();
+		  });
 
 		// Start at the beginning
 		stageOne();
@@ -33,12 +38,12 @@
 
 			// For mobile browsers, allow direct file selection as well
 			$( '#file' ).change( function () {
-				stageTwo( this.files[0] );
+				stageTwo( this.files[0], document.getElementById("fromDate").value, document.getElementById("toDate").value );
 				dropzone.disable();
 			} );
 		}
 
-		function stageTwo ( file ) {
+		function stageTwo ( file, fromDate, toDate ) {
 	    // Google Analytics event - heatmap upload file
 	    ga('send', 'event', 'Heatmap', 'upload', undefined, file.size);
 
@@ -60,6 +65,11 @@
 			$( '#intro' ).addClass( 'hidden' );
 			$( '#working' ).removeClass( 'hidden' );
 
+			if(fromDate && toDate){
+				fromDate=new Date(document.getElementById("fromDate").value).getTime();
+				toDate=new Date(document.getElementById("toDate").value).getTime();
+			}
+			
 			var SCALAR_E7 = 0.0000001; // Since Google Takeout stores latlngs as integers
 			var latlngs = [];
 			var polyline = L.polyline(latlngs, {color: 'red'}).addTo(map);
@@ -75,7 +85,15 @@
 				if ( latitude > 180 ) latitude = latitude - (2 ** 32) * SCALAR_E7;
 				if ( longitude > 180 ) longitude = longitude - (2 ** 32) * SCALAR_E7;
 
-				if ( type === 'json' ) latlngs.push( [ latitude, longitude ] );
+				if ( type === 'json' ) {
+					if(fromDate && toDate){
+						if(location.timestampMs > fromDate && location.timestampMs < toDate) 
+							latlngs.push( [ latitude, longitude ] );
+					} else {
+						latlngs.push( [ latitude, longitude ] );
+					}
+				}
+				
 				return oboe.drop;
 			} ).done( function () {
 				status( 'Generating map...' );
