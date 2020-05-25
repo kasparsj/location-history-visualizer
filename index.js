@@ -6,11 +6,6 @@
 			$( '#currentStatus' ).text( message );
 		}
 		
-		$(function() {
-			$("#fromDate").datepicker();
-			$("#toDate").datepicker();
-		  });
-
 		// Start at the beginning
 		stageOne();
 
