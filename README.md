@@ -17,7 +17,9 @@ It works directly in your web browser &ndash; no software to download, no packag
 
 ## Credit
 
-Based on the 2014 program [location-history-visualizer](https://github.com/theopolisme/location-history-visualizer), developed by Theopolisme <theopolismewiki@gmail.com>.
+Based on the 2014 program [location-history-visualizer](https://github.com/theopolisme/location-history-visualizer), developed by [@theopolisme](https://github.com/theopolisme/).
+
+Date filter based on the [commit](https://github.com/pierlauro/location-history-visualizer/commit/0be2d189acce6511916350ccd8a54d2a2fa506e5) from [@pierlauro](https://github.com/pierlauro).
 
 ## License
 

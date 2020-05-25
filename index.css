@@ -18,8 +18,12 @@ a:hover {
   text-decoration: underline;
 }
 
-p {
+p, li {
   line-height: 22px;
+}
+
+li {
+  margin-bottom: 0.75em;
 }
 
 .visualizer {
