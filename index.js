@@ -5,6 +5,12 @@
 		function status( message ) {
 			$( '#currentStatus' ).text( message );
 		}
+
+		// If browser does not support 'date' inputs, use 
+		// jquery-ui's datepicker
+		if ( $('[type="date"]').prop('type') != 'date' ) {
+			$('[type="date"]').datepicker();
+		}
 		
 		// Start at the beginning
 		stageOne();
