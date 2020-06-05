@@ -76,13 +76,6 @@ h2 {
 	text-align: center
 }
 
-.note {
-  padding: 10px;
-  text-align: center;
-  background-color: #ffeb3b;
-  border-radius: 8px;
-}
-
 .credit {
   padding-top: 4px;
   margin-top: 12px;
@@ -91,86 +84,8 @@ h2 {
 	text-align: center;
 }
 
-.whats-new {
-  font-size: 0.9em;
-  text-align: center;
-}
-
 #working {
 	text-align: center;
-}
-
-#controls {
-  z-index: 99999;
-  position: absolute;
-  overflow: hidden;
-  bottom: -200px;
-  /* We set a specific height here so that revealing only the top part of the
-  div will always reveal the *correct* top part. When we expand it later (on hover),
-  we set height back to auto, so that all the content is shown correctly. Slightly
-  hacky, yes, but it appears to be working in all browsers. A Good Thing. */
-  height: 133px;
-  left: 0px;
-  margin: 0px 10px;
-  padding: 3px 16px 5px;
-  background-color: rgba(255,255,255,0.7);
-  transition: bottom 0.5s;
-}
-
-.map-active #controls {
-  bottom: -106px;
-}
-
-#controls:hover {
-  bottom: 0px;
-  left: 0px;
-  height: auto;
-  background-color: rgba(255,255,255,0.9);
-}
-
-#controls:hover .title span {
-  opacity: 0;
-}
-
-#controls .title {
-  text-align: center;
-  font-weight: bold;
-  line-height: 1.4;
-  font-size: 13px;
-  padding-bottom: 3px;
-}
-
-#controls .title span {
-  display: block;
-  line-height: 0.9;
-  font-weight: lighter;
-  font-size: 11px;
-  transition: all 0.5s ease-in-out;
-}
-
-#controls .control-block {
-    clear: both;
-}
-
-#controls .control-block input {
-  float: right;
-  margin-left: 10px;
-}
-
-#controls .actions {
-  text-align: center;
-}
-
-#controls .support {
-  border-top: 1px dashed black;
-  margin-top: 10px;
-  padding-top: 10px;
-  font-size: 0.8em;
-  text-align: center;
-}
-
-#controls .support div {
-  padding-bottom: 5px;
 }
 
 /* http://tobiasahlin.com/spinkit/ */
@@ -272,11 +187,4 @@ button#launch:active, button#launch:focus, button#launch:hover {
   background-color: #273140;
   color: #fff;
   box-shadow: inset 0 3px 5px rgba(0, 0, 0, .125);
-}
-
-div.disclaimer {
-  color: #B7B7B7;
-  font-size: 0.9em;
-  margin-top: 8px;
-  font-style: italic;
 }
