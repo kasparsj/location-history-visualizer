@@ -1,5 +1,11 @@
 ( function ( $, L, prettySize ) {
 		var map;
+		var locData = {
+			latitude: [],
+			longitude: [],
+			timestamp: [],
+			accuracy: []
+		};
 
 		// Updates currentStatus field during data loading
 		function status( message ) {
@@ -75,7 +81,6 @@
 			var latlngs = [];
 			var polyline = L.polyline(latlngs, {color: 'red'}).addTo(map);
 
-
 			// Use Oboe to stream Google Takeout data if file is JSON
 			var os = new oboe();
 			os.node( 'locations.*', function ( location ) {
@@ -86,14 +91,17 @@
 				if ( latitude > 180 ) latitude = latitude - (2 ** 32) * SCALAR_E7;
 				if ( longitude > 180 ) longitude = longitude - (2 ** 32) * SCALAR_E7;
 
-				if ( type === 'json' ) {
-					if(fromDate && toDate){
-						if(location.timestampMs > fromDate && location.timestampMs < toDate) 
-							latlngs.push( [ latitude, longitude ] );
-					} else {
+				if(fromDate && toDate){
+					if(location.timestampMs > fromDate && location.timestampMs < toDate) 
 						latlngs.push( [ latitude, longitude ] );
-					}
+				} else {
+					latlngs.push( [ latitude, longitude ] );
 				}
+
+				locData.latitude.push(latitude);
+				locData.longitude.push(longitude);
+				locData.timestamp.push(location.timestampMs);
+				locData.accuracy.push(location.accuracy);
 				
 				return oboe.drop;
 			} ).done( function () {
@@ -115,6 +123,11 @@
 		function stageThree ( numberProcessed ) {
 	    // Google Analytics event - heatmap render
 	    ga('send', 'event', 'Heatmap', 'render', undefined, numberProcessed);
+
+			console.log(locData.latitude.slice(0, 10));
+			console.log(locData.longitude.slice(0, 10));
+			console.log(locData.timestamp.slice(0, 10));
+			console.log(locData.accuracy.slice(0, 10));
 
 			var $done = $( '#done' );
 
