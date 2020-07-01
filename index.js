@@ -1,3 +1,5 @@
+//import {data_analysis} from './analysis.js';
+
 ( function ( $, L, prettySize ) {
 		var map;
 		var locData = {
@@ -124,11 +126,6 @@
 	    // Google Analytics event - heatmap render
 	    ga('send', 'event', 'Heatmap', 'render', undefined, numberProcessed);
 
-			console.log(locData.latitude.slice(0, 10));
-			console.log(locData.longitude.slice(0, 10));
-			console.log(locData.timestamp.slice(0, 10));
-			console.log(locData.accuracy.slice(0, 10));
-
 			var $done = $( '#done' );
 
 			// Change tabs :D
@@ -154,7 +151,27 @@
 	        alert( 'Please enter a valid email address to proceed.' );
 	      }
 	    } );
+			
+			data_analysis(locData);
+		}
 
+		// LatLon: parse and operate on Latitude/Longitude coordinates
+		import LatLon from 'https://cdn.jsdelivr.net/npm/geodesy@2.2.1/latlon-spherical.min.js';
+
+		function data_analysis(locData){
+
+			// parse latitude and longitude to 
+			locData.parsedLatLon = locData.longitude.map(x => LatLon.parse(x));
+			locData.parsedLatitude = locData.latitude.map(x => LatLon.parse(x));
+
+			locData.distance = locData.longitude.map((e,i) => locData.latitude)
+			var plotlyTester = document.getElementById('plotlyTester');
+			plotlyTester.classList.remove('hidden');
+			Plotly.newPlot( plotlyTester, [{
+				x: locData.timestamp.slice(0,1000),
+				y: locData.longitude.slice(0,1000) }], {
+				margin: { t: 0 } } 
+			);
 		}
 
 		/*

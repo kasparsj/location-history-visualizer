@@ -62,6 +62,9 @@
 
                 <p class="credit">This is an <a target="_blank" href="https://github.com/operte/location-history-visualizer">open source project</a> written in 2020.</p>
             </div>
+
+            <div id="plotlyTester" class="content hidden" style="width:600px;height:250px;"></div>
+
         </div>
     </div>
 
@@ -74,11 +77,11 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/3.8.4/dropzone.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/oboe.js/2.1.5/oboe-browser.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.16.0/d3.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.15/lodash.min.js"></script>
+<!-- Plotly: simple plots -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/1.54.1/plotly.min.js"></script>
 <script src="lib/prettysize.js"></script>
-<script src="index.js"></script>
-<script src="analysis.js"></script>
+<!--script src="analysis.js" type="module"></script-->
+<script src="index.js" type="module"></script>
 
 <!-- BEGIN GOOGLE ANALYTICS -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=UA-165919121-1"></script>
