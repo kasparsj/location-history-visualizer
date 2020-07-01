@@ -111,31 +111,19 @@
 		}
 
 		function stageThree ( numberProcessed ) {
-			var $done = $( '#done' );
-
-			// Change tabs :D
+			// Change tabs
 			$( 'body' ).removeClass( 'working' );
 			$( '#working' ).addClass( 'hidden' );
-			$done.removeClass( 'hidden' );
+			$( '#done' ).removeClass( 'hidden' );
 
 			// Update count
 			$( '#numberProcessed' ).text( numberProcessed.toLocaleString() );
 
 			$( '#launch' ).click( function () {
-			var $email = $( '#email' );
-			if ( $email.is( ':valid' ) ) {
-				$( this ).text( 'Launching... ' );
-				$.post( '/heatmap/submit-email.php', {
-				email: $email.val()
-				} )
-				.always( function () {
 				$( 'body' ).addClass( 'map-active' );
-				$done.fadeOut();
-				} );
-			} else {
-				alert( 'Please enter a valid email address to proceed.' );
-			}
+				$( '#done' ).fadeOut();
 			} );
+
 
 		}
 

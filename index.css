@@ -136,20 +136,9 @@ h2 {
 }
 
 /* email signup */
-.email-form {
+.launch-button {
   margin: 16px 0;
   text-align: center;
-}
-
-input#email {
-  font-size: 16px;
-  font-family: PTSans, Helvetica, Arial, sans-serif;
-  border-radius: 2px;
-  background-color: white;
-  padding: 6px 6px;
-  min-width: 200px;
-  border: 1px solid #ccc;
-  outline: 0;
 }
 
 button#launch {
