@@ -5,17 +5,20 @@ import LatLon from 'https://cdn.jsdelivr.net/npm/geodesy@2.2.1/latlon-spherical.
 
 export function data_analysis(locData){
 
-    // Zip latitude and longitude
-    locData.LatLon = locData.latitude.map( (e,idx) => LatLon.parse(e, locData.longitude[idx]));
-    console.log(locData.LatLon[0]);
+    // Parse data with LatLon
+    locData.LatLon = locData.latitude.map( (itm,idx) => LatLon.parse(itm, locData.longitude[idx]));
 
-    //locData.distance = locData.longitude.map((e,i) => locData.latitude);
+    locData.distance = locData.LatLon.reduce((distance, itm, idx, arr) => {
+        if (idx === 0) { distance.push(0); }
+        else { distance.push(arr[idx-1].distanceTo(itm)); }
+        return distance;
+    }, []);
 
     var plotlyTester = document.getElementById('plotlyTester');
     plotlyTester.classList.remove('hidden');
 	Plotly.newPlot( plotlyTester, [{
         x: locData.timestamp.slice(0,1000),
-        y: locData.longitude.slice(0,1000) }], {
+        y: locData.distance.slice(0,1000) }], {
         margin: { t: 0 } } 
     );
 }
