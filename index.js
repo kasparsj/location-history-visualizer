@@ -1,4 +1,4 @@
-//import {data_analysis} from './analysis.js';
+import {data_analysis} from './analysis.js';
 
 ( function ( $, L, prettySize ) {
 		var map;
@@ -145,33 +145,14 @@
 	        } )
 	        .always( function () {
 	          $( 'body' ).addClass( 'map-active' );
-	          $done.fadeOut();
+			  $done.fadeOut();
+			  data_analysis(locData);
 	        } );
 	      } else {
 	        alert( 'Please enter a valid email address to proceed.' );
 	      }
 	    } );
 			
-			data_analysis(locData);
-		}
-
-		// LatLon: parse and operate on Latitude/Longitude coordinates
-		import LatLon from 'https://cdn.jsdelivr.net/npm/geodesy@2.2.1/latlon-spherical.min.js';
-
-		function data_analysis(locData){
-
-			// parse latitude and longitude to 
-			locData.parsedLatLon = locData.longitude.map(x => LatLon.parse(x));
-			locData.parsedLatitude = locData.latitude.map(x => LatLon.parse(x));
-
-			locData.distance = locData.longitude.map((e,i) => locData.latitude)
-			var plotlyTester = document.getElementById('plotlyTester');
-			plotlyTester.classList.remove('hidden');
-			Plotly.newPlot( plotlyTester, [{
-				x: locData.timestamp.slice(0,1000),
-				y: locData.longitude.slice(0,1000) }], {
-				margin: { t: 0 } } 
-			);
 		}
 
 		/*
