@@ -45,8 +45,6 @@
 		}
 
 		function stageTwo ( file, fromDate, toDate ) {
-	    // Google Analytics event - heatmap upload file
-	    ga('send', 'event', 'Heatmap', 'upload', undefined, file.size);
 
 			var type;
 
@@ -113,9 +111,6 @@
 		}
 
 		function stageThree ( numberProcessed ) {
-	    // Google Analytics event - heatmap render
-	    ga('send', 'event', 'Heatmap', 'render', undefined, numberProcessed);
-
 			var $done = $( '#done' );
 
 			// Change tabs :D
@@ -126,21 +121,21 @@
 			// Update count
 			$( '#numberProcessed' ).text( numberProcessed.toLocaleString() );
 
-	    $( '#launch' ).click( function () {
-	      var $email = $( '#email' );
-	      if ( $email.is( ':valid' ) ) {
-	        $( this ).text( 'Launching... ' );
-	        $.post( '/heatmap/submit-email.php', {
-	          email: $email.val()
-	        } )
-	        .always( function () {
-	          $( 'body' ).addClass( 'map-active' );
-	          $done.fadeOut();
-	        } );
-	      } else {
-	        alert( 'Please enter a valid email address to proceed.' );
-	      }
-	    } );
+			$( '#launch' ).click( function () {
+			var $email = $( '#email' );
+			if ( $email.is( ':valid' ) ) {
+				$( this ).text( 'Launching... ' );
+				$.post( '/heatmap/submit-email.php', {
+				email: $email.val()
+				} )
+				.always( function () {
+				$( 'body' ).addClass( 'map-active' );
+				$done.fadeOut();
+				} );
+			} else {
+				alert( 'Please enter a valid email address to proceed.' );
+			}
+			} );
 
 		}
 
