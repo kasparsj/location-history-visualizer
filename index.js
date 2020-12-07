@@ -70,13 +70,29 @@
 			}
 			
 			var SCALAR_E7 = 0.0000001; // Since Google Takeout stores latlngs as integers
-			var latlngs = [];
-			var polyline = L.polyline(latlngs, {color: 'red'}).addTo(map);
+			var locations = {};
+			var points = [];
+			var lines = {
+				type: "FeatureCollection",
+				features: []
+			};
+			var line;
+			//var polyline = L.polyline(points, {color: 'red'}).addTo(map);
 
 
 			// Use Oboe to stream Google Takeout data if file is JSON
 			var os = new oboe();
 			os.node( 'locations.*', function ( location ) {
+				if (location.accuracy >= 1000) {
+					return;
+				}
+
+				if (fromDate && toDate) {
+					if (location.timestampMs < fromDate || location.timestampMs > toDate) {
+						return;
+					}
+				}
+
 				var latitude = location.latitudeE7 * SCALAR_E7,
 					longitude = location.longitudeE7 * SCALAR_E7;
 
@@ -84,21 +100,77 @@
 				if ( latitude > 180 ) latitude = latitude - (2 ** 32) * SCALAR_E7;
 				if ( longitude > 180 ) longitude = longitude - (2 ** 32) * SCALAR_E7;
 
-				if ( type === 'json' ) {
-					if(fromDate && toDate){
-						if(location.timestampMs > fromDate && location.timestampMs < toDate) 
-							latlngs.push( [ latitude, longitude ] );
-					} else {
-						latlngs.push( [ latitude, longitude ] );
-					}
+				var timestampMs = parseInt(location.timestampMs);
+				var point = [ latitude, longitude ];
+
+				if (!line || (timestampMs - line.timestampMs) > 1000*60*60*4) {
+					line = {
+						type: "Feature",
+						properties: {
+							scalerank: 2,
+							name: (new Date(timestampMs).toString()),
+							name_alt: null,
+							featureclass: "Day"
+						},
+						geometry: {
+							type: "LineString",
+							coordinates: []
+						}
+					};
+					lines.features.push(line);
 				}
-				
+				line.timestampMs = timestampMs;
+				line.geometry.coordinates.push(point);
+
+				if ( type === 'json' ) {
+					points.push( point );
+					locations[point.toString()] = location;
+				}
+
 				return oboe.drop;
 			} ).done( function () {
 				status( 'Generating map...' );
-				polyline.setLatLngs(latlngs);
 
-				stageThree(  /* numberProcessed */ latlngs.length );
+				//polyline.setLatLngs(points);
+
+				L.glify.points({
+					map,
+					size: (i) => {
+						return 20;
+					},
+					color: () => {
+						return {
+							r: 1,
+							g: 0,
+							b: 0,
+						};
+					},
+					click: (e, point) => {
+						var location = locations[point.toString()];
+						//set up a standalone popup (use a popup as a layer)
+						L.popup()
+							.setLatLng(point)
+							.setContent('You visited the point on:' + (new Date(parseInt(location.timestampMs))).toString() + '. Accuracy: ' + location.accuracy)
+							.openOn(map);
+					},
+					data: points
+				});
+
+				// L.glify.lines({
+				// 	map: map,
+				// 	latitudeKey: 0,
+				// 	longitudeKey: 1,
+				// 	weight: 5,
+				// 	click: (e, feature) => {
+				// 		L.popup()
+				// 			.setLatLng(e.latlng)
+				// 			.setContent('You clicked on ' + feature.properties.name)
+				// 			.openOn(map);
+				// 	},
+				// 	data: lines
+				// });
+
+				stageThree(  /* numberProcessed */ points.length );
 			} );
 
 			var fileSize = prettySize( file.size );
