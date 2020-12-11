@@ -15,7 +15,7 @@
     <div class="container">
         <div class="content">
             <!-- Intro, before data has been uploaded -->
-            <div id="intro" class="content-box">
+            <div id="intro" class="content-box center-box">
                 <h2>Location History Visualizer</h2>
 
                 <p>Welcome to <b>Location History Visualizer</b>, a tool for visualizing your Google <a href="https://google.com/locationhistory" target="_blank">Location History</a> data. You can explore your location history over a specific time frame, for example during a roadtrip, which lets you recall all the places you have been to.</p>
@@ -24,10 +24,6 @@
 
                 <ol>
                     <li>To start, go to <a href="https://google.com/takeout" target="_blank">Google Takeout</a> to download your Location History data. On that page, select only "Location History", hit "Next" and, finally, click "Create export". This typically takes a few minutes. Once the archive has been created, download it and unzip it. Your data is in <code>Takeout/Location History/LocationHistory.json</code>.</li>
-                    
-                    <li>Specify the <b>start and end date</b> that you want to see <i>(optional)</i>:<br/>
-                    Start: <input type="date" id="fromDate"> &nbsp; End: <input type="date" id="toDate"></li>
-
                     <li><b>Drag and drop</b> <code>LocationHistory.json</code> onto this page or <b>select</b> it directly: <input name="file" type="file" id="file"></input></li>
                 </ol>
                     
@@ -35,7 +31,7 @@
             </div>
 
             <!-- Shown in interim while processing is in progress -->
-            <div id="working" class="content-box hidden">
+            <div id="working" class="content-box center-box hidden">
                 <h2>Processing data...</h2>
                 <div class="loading">
                     <div class="bounce1"></div>
@@ -51,10 +47,10 @@
             </div>
 
             <!-- Content displayed once processing complete -->
-            <div id="done" class="content-box hidden">
+            <div id="done" class="content-box center-box hidden">
                 <h2>Render complete!</h2>
                 <p>Successfully processed <span id="numberProcessed">a lot of</span> data points to generate your map.</p>
-                <div class="launch-button">
+                <div class="btn-margin">
                     <button id="launch">Start exploring</button>
                 </div>
                 <p>Usage tips: <i>Zoom</i> by scrolling, double-clicking, or using the buttons in the upper lefthand corner. <i>Navigate</i> by clicking and dragging.</p>
@@ -66,6 +62,27 @@
 
     <!-- The map, populated by leaflet.js -->
     <div id="map"></div>
+
+    <div id="overlays">
+        <div id="ui" class="content-box">
+            <p>Start date: <input type="date" id="fromDate"> </p>
+            <p>End date: <input type="date" id="toDate"></p>
+            <p>Max accuracy: <input type="number" id="maxAccuracy" value="1000"></p>
+            <p>Min data points: <input type="number" id="minData" value="0"></p>
+            <p>Min times: <input type="number" id="minTimes" value="0"></p>
+            <p>Rounding (km): <input type="number" id="rounding" value="0.5"></p>
+            <p>Min size: <input type="number" id="minSize" value="3"></p>
+            <p>Max size: <input type="number" id="maxSize" value="20"></p>
+            <p>Divider: <input type="number" id="divider" value="10"></p>
+            <p>Show map: <input type="checkbox" id="showMap" checked></p>
+            <p>Show points: <input type="checkbox" id="showPoints" checked></p>
+            <p>Show lines: <input type="checkbox" id="showLines" checked></p>
+            <p>Exclude driving: <input type="checkbox" id="excludeDriving" checked></p>
+            <div class="btn-margin">
+                <button id="update">Update</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>

@@ -62,14 +62,17 @@ li {
 
 .content-box {
 	margin: 0 auto;
-	width: 80%;
-	min-width: 300px;
-	max-width: 600px;
 	background-color: rgba(255,255,255,0.9);
 	padding: 10px;
 	border-radius: 8px;
-  max-height: 85vh;
-  overflow-y: scroll;
+    max-height: 85vh;
+}
+
+.center-box {
+    width: 80%;
+    min-width: 300px;
+    max-width: 600px;
+    overflow-y: scroll;
 }
 
 h2 {
@@ -86,6 +89,13 @@ h2 {
 
 #working {
 	text-align: center;
+}
+
+#ui {
+    position: absolute;
+    top:0;
+    right: 0;
+    width: 155px;
 }
 
 /* http://tobiasahlin.com/spinkit/ */
@@ -136,7 +146,7 @@ h2 {
 }
 
 /* email signup */
-.launch-button {
+.btn-margin {
   margin: 16px 0;
   text-align: center;
 }
