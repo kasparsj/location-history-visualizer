@@ -11,6 +11,11 @@
 	var lines;
 	var linesData;
 	var minTs, maxTs;
+	var playInterval;
+	var playPoints = [];
+	var playSpeed = 1000;
+	var playLength = 100;
+	var renderAlpha = false;
 
     // Updates currentStatus field during data loading
     function status(message) {
@@ -93,6 +98,7 @@
 
 			if (prevLocation) {
 				location.prev = prevLocation;
+				prevLocation.next = location;
 			}
 			prevLocation = location;
 
@@ -117,6 +123,7 @@
                         r: 1,
                         g: 0,
                         b: 0,
+                        a: renderAlpha ? 1-i*(1/playLength) : 1
                     };
                 },
                 click: (e, point) => {
@@ -178,23 +185,28 @@
 		$('#showPoints').change(renderPoints);
 		$('#showLines').change(renderLines);
         $('#update').click(onUpdate);
+        $('#play').click(onPlay);
+        $('#stop').click(onStop);
     }
 
 	function toggleMap() {
 		$('.leaflet-tile-pane').css("visibility", $('#showMap').is(':checked') ? 'visible' : 'hidden');
 	}
 
-	function renderPoints() {
-		points.settings.data = $('#showPoints').is(':checked') ? pointsData : [];
+	function renderPoints(data) {
+		points.settings.data = $('#showPoints').is(':checked') ? data || pointsData : [];
 		points.render();
 	}
 
-    function renderLines() {
-		lines.settings.data.features = $('#showLines').is(':checked') ? linesData : [];
+    function renderLines(data) {
+		lines.settings.data.features = $('#showLines').is(':checked') ? data || linesData : [];
 		lines.render();
 	}
 
     function onUpdate() {
+        if (renderAlpha) {
+            onStop();
+        }
 		$('body').addClass('working');
 		var rounding = parseFloat($('#rounding').val());
 		if (!isNaN(rounding) && rounding !== ROUNDING) {
@@ -207,6 +219,56 @@
 		renderLines();
 		$('body').removeClass('working');
 	}
+
+	function onPlay() {
+        renderAlpha = true;
+        $("#play").hide();
+        $("#stop").show();
+        $("#currentDate").show();
+        var currentLoc = locData[pointsData[0].toString()][0];
+        playFrame(currentLoc);
+    }
+
+    function playFrame(currentLoc) {
+        renderPoint(currentLoc);
+        playSpeed = (parseInt($("#playSpeed").val()) || playSpeed);
+        var nextLoc = getNextPoint(currentLoc);
+        if (!nextLoc) {
+            onStop();
+            return;
+        }
+        var ms = Math.max(1, (nextLoc.timestampMs - currentLoc.timestampMs) / (1000*60*60*24) * playSpeed); // 1 day = 5 secs
+        playInterval = setTimeout(function() {
+            playFrame(nextLoc);
+        }, ms);
+    }
+
+    function renderPoint(currentLoc) {
+        $("#currentDate")[0].valueAsDate = new Date(currentLoc.timestampMs);
+        playPoints.unshift(currentLoc.point);
+        playLength = Math.abs(parseInt($("#playLength").val())) || playLength;
+        while (playPoints.length > playLength) {
+            playPoints.pop();
+        }
+        renderPoints(playPoints);
+    }
+
+    function getNextPoint(currentLoc) {
+        var nextLoc = currentLoc.next;
+        while (nextLoc && (!nextLoc.point || currentLoc.point === nextLoc.point)) {
+            nextLoc = nextLoc.next;
+        }
+        return nextLoc;
+    }
+
+    function onStop() {
+        renderAlpha = false;
+        $("#stop").hide();
+        $("#play").show();
+        $("#currentDate").hide();
+        clearInterval(playInterval);
+        onUpdate();
+    }
 
     function calcRounded(location) {
         location.cartesian = calcCartesianCoord(location.lat, location.lon, RADIUS / ROUNDING);

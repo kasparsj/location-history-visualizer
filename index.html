@@ -74,12 +74,17 @@
             <p>Min size: <input type="number" id="minSize" value="3"></p>
             <p>Max size: <input type="number" id="maxSize" value="20"></p>
             <p>Divider: <input type="number" id="divider" value="10"></p>
+            <p>Play length: <input type="number" id="playLength" value="100"></p>
+            <p>Play speed: <input type="number" id="playSpeed" value="1000"></p>
             <p>Show map: <input type="checkbox" id="showMap" checked></p>
             <p>Show points: <input type="checkbox" id="showPoints" checked></p>
             <p>Show lines: <input type="checkbox" id="showLines" checked></p>
             <p>Exclude driving: <input type="checkbox" id="excludeDriving" checked></p>
             <div class="btn-margin">
-                <button id="update">Update</button>
+                <button id="update">Update</button><br/>
+                <button id="play">Play</button><br/>
+                <button id="stop">Stop</button>
+                <input type="date" id="currentDate" disabled="disabled">
             </div>
         </div>
     </div>
