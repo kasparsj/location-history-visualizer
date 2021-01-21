@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
     <meta name="description" content="Visualize your collected Google Location History data using an interactive heatmap directly in your browser.">
     <link rel="stylesheet" href="index.css"/>
+    <link rel="stylesheet" href="clock.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/themes/base/jquery-ui.min.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.css"/>
 </head>
@@ -63,6 +64,16 @@
     <!-- The map, populated by leaflet.js -->
     <div id="map"></div>
 
+    <div id="clock">
+        <div id="currentDate"></div>
+        <div id="timezone"></div>
+        <div class="watch">
+            <span class="hours"></span>
+            <span class="minutes"></span>
+            <span class="seconds"></span>
+        </div>
+    </div>
+
     <div id="overlays">
         <div id="ui" class="content-box">
             <p>Start date: <input type="date" id="fromDate"> </p>
@@ -71,20 +82,22 @@
             <p>Min data points: <input type="number" id="minData" value="0"></p>
             <p>Min times: <input type="number" id="minTimes" value="0"></p>
             <p>Rounding (km): <input type="number" id="rounding" value="0.5"></p>
+            <div class="btn-margin">
+                <button id="update">Update</button>
+            </div>
             <p>Min size: <input type="number" id="minSize" value="3"></p>
             <p>Max size: <input type="number" id="maxSize" value="20"></p>
             <p>Divider: <input type="number" id="divider" value="10"></p>
-            <p>Play length: <input type="number" id="playLength" value="100"></p>
-            <p>Play speed: <input type="number" id="playSpeed" value="1000"></p>
+            <p>Trail length (h): <input type="number" id="trailLength" value="12"></p>
+            <p>Day length (ms): <input type="number" id="playSpeed" value="1000"></p>
             <p>Show map: <input type="checkbox" id="showMap" checked></p>
             <p>Show points: <input type="checkbox" id="showPoints" checked></p>
             <p>Show lines: <input type="checkbox" id="showLines" checked></p>
             <p>Exclude driving: <input type="checkbox" id="excludeDriving" checked></p>
+            <p>Total points: <span id="totalPoints"></span></p>
             <div class="btn-margin">
-                <button id="update">Update</button><br/>
-                <button id="play">Play</button><br/>
+                <button id="play">Play</button>
                 <button id="stop">Stop</button>
-                <input type="date" id="currentDate" disabled="disabled">
             </div>
         </div>
     </div>
@@ -93,9 +106,12 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/leaflet.glify@3.1.0/dist/glify-browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet.glify@3.0.2/dist/glify-browser.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/3.8.4/dropzone.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/oboe.js/2.1.5/oboe-browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tz-lookup@6.1.25/tz.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/simonbaird/CoolClock@2.1.4/coolclock.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/simonbaird/CoolClock@2.1.4/moreskins.js"></script>
 <script src="lib/prettysize.js"></script>
 <script src="index.js"></script>
 

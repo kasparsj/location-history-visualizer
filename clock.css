@@ -1,0 +1,42 @@
+#clock {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+}
+
+.watch {
+    border: 10px solid #fff;
+    border-radius: 50%;
+    width: 100px;
+    height: 100px;
+    margin: 0 auto;
+    position: relative;
+    transform: rotate(90deg);
+}
+
+.hours,
+.minutes,
+.seconds {
+    height: 3px;
+    background: #000;
+    transform-origin: 100%;
+    display: block;
+    position: absolute;
+    top: 50%;
+    margin-top: -3px;
+}
+
+.hours {
+    width: 35%;
+    left: 15%;
+}
+
+.seconds,
+.minutes {
+    width: 43%;
+    left: 7%;
+}
+
+.seconds {
+    display: none;
+}

@@ -2,7 +2,10 @@
     var SCALAR_E7 = 0.0000001; // Since Google Takeout stores latlngs as integers
     var RADIUS = 6371;
     var ROUNDING = 0.5;
+    var PLAY_UPDATE = 1000/60;
+    var TILES_URL = location.protocol === "file:" ? 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png' : 'https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png';
     var map;
+    var tileLayer;
     var points;
     var pointsData;
     var locations = {};
@@ -13,9 +16,28 @@
 	var minTs, maxTs;
 	var playInterval;
 	var playPoints = [];
-	var playSpeed = 1000;
-	var playLength = 100;
-	var renderAlpha = false;
+	var playTimes = [];
+	var isPlaying = false;
+    var playSpeed = localStorage.getItem("playSpeed") || 1000;
+    var trailLength = localStorage.getItem("trailLength") || 12;
+    var minSize = localStorage.getItem("minSize") || 3;
+    var maxSize = localStorage.getItem("maxSize") || 20;
+    var divider = localStorage.getItem("divider") || 10;
+    var showPoints = localStorage.getItem("showPoints") === null ? true : localStorage.getItem("showPoints") === "true";
+    var showLines = localStorage.getItem("showLines") === null ? true : localStorage.getItem("showLines") === "true";
+    var excludeDriving = localStorage.getItem("excludeDriving") === null ? true : localStorage.getItem("excludeDriving") === "true";
+    var currentMs;
+    var isNightTime = false;
+
+    $("#playSpeed").val(playSpeed);
+    $("#trailLength").val(trailLength);
+    $("#minSize").val(minSize);
+    $("#maxSize").val(maxSize);
+    $("#divider").val(divider);
+    $("#showPoints")[0].checked = showPoints;
+    $("#showLines")[0].checked = showLines;
+    $("#excludeDriving")[0].checked = excludeDriving;
+
 
     // Updates currentStatus field during data loading
     function status(message) {
@@ -36,11 +58,13 @@
 
         // Initialize the map
         map = L.map('map').setView([0, 0], 2);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: 'location-history-visualizer is open source and available <a href="https://github.com/operte/location-history-visualizer">on GitHub</a>. Map data &copy; <a href="https://openstreetmap.org">OpenStreetMap</a> contributors.',
+        tileLayer = L.tileLayer(TILES_URL, {
             maxZoom: 18,
-            minZoom: 2
-        }).addTo(map);
+            minZoom: 2,
+            zoomSnap: 0.5,
+            attribution: '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>, &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a> &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors'
+        });
+        tileLayer.addTo(map);
 
         // Initialize the dropzone
         dropzone = new Dropzone(document.body, {
@@ -112,21 +136,22 @@
             points = L.glify.points({
                 map,
                 size: (i, point) => {
-                    var times = locData[point.toString()][0].times;
-                    var minSize = parseInt($('#minSize').val()) || 3;
-                    var maxSize = parseInt($('#maxSize').val()) || 20;
-                    var divider = parseInt($('#divider').val()) || 10;
+                    var times = locData[point.toString()] ? locData[point.toString()][0].times : 0;
                     return Math.max(Math.min(times / divider, maxSize), minSize);
                 },
-                color: (i, point) => {
-                    return {
-                        r: 1,
-                        g: 0,
-                        b: 0,
-                        a: renderAlpha ? 1-i*(1/playLength) : 1
-                    };
-                },
+                // color: (i, point) => {
+                //     if (isPlaying && i === points.settings.data.length-1) {
+                //         return {r: 0.66, g: 0, b: isNightTime ? 0.08 : 0, a: 1};
+                //     }
+                //     return {
+                //         r: 0.66,
+                //         g: 0,
+                //         b: isNightTime ? 0.08 : 0,
+                //         a: isPlaying ? 1-(currentMs - playTimes[i]) / (trailLength*60*60*1000) : 1
+                //     };
+                // },
                 click: (e, point) => {
+                    if (!locData[point.toString()]) return;
                     var location = locData[point.toString()][0];
                     var dataPoints = locData[point.toString()].length;
                     //set up a standalone popup (use a popup as a layer)
@@ -135,14 +160,25 @@
                         .setContent('First time visited on:' + (new Date(parseInt(location.timestampMs))).toString() + '. Accuracy: ' + location.accuracy + '. Times: ' + location.times + ' / ' + dataPoints)
                         .openOn(map);
                 },
-                data: pointsData
+                data: showPoints ? pointsData : []
             });
 
             lines = L.glify.lines({
             	map: map,
             	latitudeKey: 0,
             	longitudeKey: 1,
-            	weight: 5,
+            	weight: 10,
+                // color: (i, feature) => {
+                //     if (isPlaying && i === lines.settings.data.features.length-1) {
+                //         return {r: 0.66, g: 0, b: isNightTime ? 0.08 : 0, a: 1};
+                //     }
+                //     return {
+                //         r: 0.66,
+                //         g: 0,
+                //         b: isNightTime ? 0.08 : 0,
+                //         a: isPlaying ? 1-(currentMs - playTimes[i]) / (trailLength*60*60*1000) : 1
+                //     };
+                // },
             	click: (e, feature) => {
             		L.popup()
             			.setLatLng(e.latlng)
@@ -151,7 +187,7 @@
             	},
             	data: {
 					type: "FeatureCollection",
-					features: linesData
+					features: showLines ? linesData : []
 				}
             });
 
@@ -187,6 +223,47 @@
         $('#update').click(onUpdate);
         $('#play').click(onPlay);
         $('#stop').click(onStop);
+        $('#minSize').change(function() {
+            minSize = parseInt($('#minSize').val()) || minSize;
+            localStorage.setItem("minSize", minSize);
+            if (!isPlaying) {
+                renderPoints();
+            }
+        });
+        $('#maxSize').change(function() {
+            maxSize = parseInt($('#maxSize').val()) || maxSize;
+            localStorage.setItem("maxSize", maxSize);
+            if (!isPlaying) {
+                renderPoints();
+            }
+        });
+        $('#divider').change(function() {
+            divider = parseInt($('#divider').val()) || divider;
+            localStorage.setItem("divider", divider);
+            if (!isPlaying) {
+                renderPoints();
+            }
+        });
+        $('#trailLength').change(function() {
+            trailLength = Math.abs(parseInt($("#trailLength").val())) || trailLength;
+            localStorage.setItem("trailLength", trailLength);
+        });
+        $('#playSpeed').change(function() {
+            playSpeed = (parseInt($("#playSpeed").val()) || playSpeed);
+            localStorage.setItem("playSpeed", playSpeed);
+        });
+        $('#showPoints').change(function() {
+            showPoints = $("#showPoints").is(":checked");
+            localStorage.setItem("showPoints", showPoints);
+        });
+        $('#showLines').change(function() {
+            showLines = $("#showLines").is(":checked");
+            localStorage.setItem("showLines", showLines);
+        });
+        $('#excludeDriving').change(function() {
+            excludeDriving = $("#excludeDriving").is(":checked");
+            localStorage.setItem("excludeDriving", excludeDriving);
+        });
     }
 
 	function toggleMap() {
@@ -194,17 +271,17 @@
 	}
 
 	function renderPoints(data) {
-		points.settings.data = $('#showPoints').is(':checked') ? data || pointsData : [];
+		points.settings.data = showPoints ? data || pointsData : [];
 		points.render();
 	}
 
     function renderLines(data) {
-		lines.settings.data.features = $('#showLines').is(':checked') ? data || linesData : [];
+		lines.settings.data.features = showLines ? data || linesData : [];
 		lines.render();
 	}
 
     function onUpdate() {
-        if (renderAlpha) {
+        if (isPlaying) {
             onStop();
         }
 		$('body').addClass('working');
@@ -221,52 +298,90 @@
 	}
 
 	function onPlay() {
-        renderAlpha = true;
+        isPlaying = true;
         $("#play").hide();
         $("#stop").show();
-        $("#currentDate").show();
         var currentLoc = locData[pointsData[0].toString()][0];
-        playFrame(currentLoc);
+        playFrame(currentLoc, 0);
     }
 
-    function playFrame(currentLoc) {
-        renderPoint(currentLoc);
-        playSpeed = (parseInt($("#playSpeed").val()) || playSpeed);
+    function playFrame(currentLoc, time) {
         var nextLoc = getNextPoint(currentLoc);
+        renderPoint(currentLoc, nextLoc, time);
         if (!nextLoc) {
             onStop();
             return;
         }
-        var ms = Math.max(1, (nextLoc.timestampMs - currentLoc.timestampMs) / (1000*60*60*24) * playSpeed); // 1 day = 5 secs
+        var ms = Math.max(0, Math.min(PLAY_UPDATE, (nextLoc.timestampMs - currentLoc.timestampMs) / (1000*60*60*24) * Math.max(1, playSpeed)));
         playInterval = setTimeout(function() {
-            playFrame(nextLoc);
+            if ((time + ms) >= (nextLoc.timestampMs - currentLoc.timestampMs) / (1000*60*60*24) * Math.max(1, playSpeed)) {
+                playFrame(nextLoc, 0);
+            }
+            else {
+                playFrame(currentLoc, time + ms);
+            }
         }, ms);
     }
 
-    function renderPoint(currentLoc) {
-        $("#currentDate")[0].valueAsDate = new Date(currentLoc.timestampMs);
-        playPoints.unshift(currentLoc.point);
-        playLength = Math.abs(parseInt($("#playLength").val())) || playLength;
-        while (playPoints.length > playLength) {
-            playPoints.pop();
+    function renderPoint(currentLoc, nextLoc, time) {
+        var diff = (nextLoc.timestampMs - currentLoc.timestampMs);
+        var progress = time / (diff / (1000*60*60*24) * Math.max(1, playSpeed));
+        currentMs = currentLoc.timestampMs + diff * progress;
+        var between = lerpLatLon(currentLoc.point, nextLoc.point, progress);
+        if (!playPoints.length || between[0] !== playPoints[0][0] || between[1] !== playPoints[0][1]) {
+            playPoints.push(between);
+            playTimes.push(currentMs);
         }
+        while (playTimes.length > 1 && playTimes[0] < currentMs - trailLength*60*60*1000) {
+            playPoints.shift();
+            playTimes.shift();
+        }
+        var currentTZ = tzlookup(playPoints[playPoints.length-1][0], playPoints[playPoints.length-1][1]);
+        updateClock(currentMs, currentTZ);
         renderPoints(playPoints);
+        if (showLines) {
+            var playLines = [{
+                type: "Feature",
+                properties: {
+                    scalerank: 2,
+                    name: "todo: should be times",
+                    name_alt: null,
+                    featureclass: "Connection"
+                },
+                geometry: {
+                    type: "LineString",
+                    coordinates: playPoints
+                }
+            }];
+            renderLines(playLines);
+        }
+        map.fitBounds(playPoints, {padding: [100, 100], maxZoom: 14});
+    }
+
+    function updateClock(ms, tz) {
+        var date = new Date(ms);
+        var tzDate = new Date(date.toLocaleString("en-US", {timeZone: tz}));
+        clock(tzDate);
+        $("#currentDate").text(tzDate.toLocaleString());
+        $("#timezone").text(tz);
+        isNightTime = tzDate.getHours() > 20 || tzDate.getHours() < 6;
+        $(".visualizer").toggleClass("dark-mode", isNightTime);
     }
 
     function getNextPoint(currentLoc) {
         var nextLoc = currentLoc.next;
-        while (nextLoc && (!nextLoc.point || currentLoc.point === nextLoc.point)) {
+        while (nextLoc && !nextLoc.point) {
             nextLoc = nextLoc.next;
         }
         return nextLoc;
     }
 
     function onStop() {
-        renderAlpha = false;
+        isPlaying = false;
         $("#stop").hide();
         $("#play").show();
-        $("#currentDate").hide();
         clearInterval(playInterval);
+        $(".visualizer").removeClass("dark-mode");
         onUpdate();
     }
 
@@ -324,7 +439,6 @@
         var maxAccuracy = parseInt($("#maxAccuracy").val());
         var minData = parseInt($('#minData').val()) || 1;
         var minTimes = parseInt($('#minTimes').val()) || 1;
-        var excludeDriving = $('#excludeDriving').is(':checked');
         for (var p in locations) {
             var locs = locations[p].filter(function (loc) {
             	// quickfix
@@ -357,6 +471,7 @@
 			locData[point.toString()] = locs;
 			pointsData.push(point);
 		}
+        $("#totalPoints").text(pointsData.length);
     }
 
     function collectConnections() {
@@ -409,6 +524,40 @@
         var y = radius * Math.cos(latRad) * Math.sin(lonRad);
         var z = radius * Math.sin(latRad);
         return [x, y, z];
+    }
+
+    function lerpLatLon(point1, point2, fraction) {
+        if (fraction <= 0) return point1;
+        if (fraction >= 1) return point2;
+        if (point1[0] === point2[0] && point1[1] === point2[1]) {
+            return point1;
+        }
+
+        var lat1Rad = point1[0] * (Math.PI / 180);
+        var lon1Rad = point1[1] * (Math.PI / 180);
+        var lat2Rad = point2[0] * (Math.PI / 180);
+        var lon2Rad = point2[1] * (Math.PI / 180);
+
+        // distance between points
+        const deltaLat = lat2Rad - lat1Rad;
+        const deltaLon = lon2Rad - lon1Rad;
+        const a = Math.sin(deltaLat/2) * Math.sin(deltaLat/2) + Math.cos(lat1Rad) * Math.cos(lat2Rad) * Math.sin(deltaLon/2) * Math.sin(deltaLon/2);
+        const g = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+        const A = Math.sin((1-fraction)*g) / Math.sin(g);
+        const B = Math.sin(fraction*g) / Math.sin(g);
+
+        const x = A * Math.cos(lat1Rad) * Math.cos(lon1Rad) + B * Math.cos(lat2Rad) * Math.cos(lon2Rad);
+        const y = A * Math.cos(lat1Rad) * Math.sin(lon1Rad) + B * Math.cos(lat2Rad) * Math.sin(lon2Rad);
+        const z = A * Math.sin(lat1Rad) + B * Math.sin(lat2Rad);
+
+        const lat3Rad = Math.atan2(z, Math.sqrt(x*x + y*y));
+        const lon3Rad = Math.atan2(y, x);
+
+        const lat = lat3Rad * 180 / Math.PI;
+        const lon = lon3Rad * 180 / Math.PI;
+
+        return [lat, lon];
     }
 
     function calcLatLon(coord, radius) {
@@ -505,3 +654,21 @@
     }
 
 }(jQuery, L, prettySize));
+
+const secondSelector = document.querySelector('.seconds');
+const minuteSelector = document.querySelector('.minutes');
+const hourSelector = document.querySelector('.hours');
+
+function clock(now) {
+    const seconds = now.getSeconds();
+    const minutes = now.getMinutes();
+    const hours = now.getHours();
+
+    const getSecondsDegrees = ((seconds / 60) * 360);
+    const getMinutesDegrees = ((minutes / 60) * 360);
+    const getHoursDegrees = ((hours / 12) * 360);
+
+    secondSelector.style.transform = `rotate(${getSecondsDegrees}deg)`;
+    minuteSelector.style.transform = `rotate(${getMinutesDegrees}deg)`;
+    hourSelector.style.transform = `rotate(${getHoursDegrees}deg)`;
+}
