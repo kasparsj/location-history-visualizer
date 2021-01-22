@@ -18,16 +18,21 @@
 	var playPoints = [];
 	var playTimes = [];
 	var isPlaying = false;
-    var playSpeed = localStorage.getItem("playSpeed") || 1000;
+    var loopPlay = false;
+    var playSpeed = localStorage.getItem("playSpeed") || 2000;
     var trailLength = localStorage.getItem("trailLength") || 12;
-    var minSize = localStorage.getItem("minSize") || 3;
-    var maxSize = localStorage.getItem("maxSize") || 20;
+    var minSize = localStorage.getItem("minSize") || 10;
+    var maxSize = localStorage.getItem("maxSize") || 10;
     var divider = localStorage.getItem("divider") || 10;
     var showPoints = localStorage.getItem("showPoints") === null ? true : localStorage.getItem("showPoints") === "true";
     var showLines = localStorage.getItem("showLines") === null ? true : localStorage.getItem("showLines") === "true";
     var excludeDriving = localStorage.getItem("excludeDriving") === null ? true : localStorage.getItem("excludeDriving") === "true";
+    var currentLoc;
     var currentMs;
+    var startMs;
+    var endMs;
     var isNightTime = false;
+    var urlParams = new URLSearchParams(window.location.search);
 
     $("#playSpeed").val(playSpeed);
     $("#trailLength").val(trailLength);
@@ -54,10 +59,43 @@
     stageOne();
 
     function stageOne() {
-        var dropzone;
+        var file = urlParams.get('file');
+        if (file) {
+            $('#intro').addClass('hidden');
+            $('#working').removeClass('hidden');
+            fetch(file).then(function(response) {
+                return response.text().then(function(text) {
+                    loopPlay = true;
+                    stageTwo(new File([text], file.split('/').reverse()[0], {
+                        type: "application/json"
+                    }));
+                });
+            });
+        }
+        else {
+            $("#intro").removeClass("hidden");
+
+            // Initialize the dropzone
+            var dropzone = new Dropzone(document.body, {
+                url: '/',
+                previewsContainer: document.createElement('div'), // >> /dev/null
+                clickable: false,
+                accept: function (file, done) {
+                    stageTwo(file);
+                    dropzone.disable(); // Your job is done, buddy
+                }
+            });
+
+            // For mobile browsers, allow direct file selection as well
+            $('#file').change(function () {
+                stageTwo(this.files[0]);
+                dropzone.disable();
+            });
+        }
+        $(window).keypress(onKeyPress);
 
         // Initialize the map
-        map = L.map('map').setView([0, 0], 2);
+        map = L.map('map', { zoomControl: false }).setView([0, 0], 2);
         tileLayer = L.tileLayer(TILES_URL, {
             maxZoom: 18,
             minZoom: 2,
@@ -65,23 +103,6 @@
             attribution: '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>, &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a> &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors'
         });
         tileLayer.addTo(map);
-
-        // Initialize the dropzone
-        dropzone = new Dropzone(document.body, {
-            url: '/',
-            previewsContainer: document.createElement('div'), // >> /dev/null
-            clickable: false,
-            accept: function (file, done) {
-                stageTwo(file);
-                dropzone.disable(); // Your job is done, buddy
-            }
-        });
-
-        // For mobile browsers, allow direct file selection as well
-        $('#file').change(function () {
-            stageTwo(this.files[0]);
-            dropzone.disable();
-        });
     }
 
     function stageTwo(file) {
@@ -139,17 +160,19 @@
                     var times = locData[point.toString()] ? locData[point.toString()][0].times : 0;
                     return Math.max(Math.min(times / divider, maxSize), minSize);
                 },
-                // color: (i, point) => {
-                //     if (isPlaying && i === points.settings.data.length-1) {
-                //         return {r: 0.66, g: 0, b: isNightTime ? 0.08 : 0, a: 1};
-                //     }
-                //     return {
-                //         r: 0.66,
-                //         g: 0,
-                //         b: isNightTime ? 0.08 : 0,
-                //         a: isPlaying ? 1-(currentMs - playTimes[i]) / (trailLength*60*60*1000) : 1
-                //     };
-                // },
+                color: (i, point) => {
+                    // quickfix
+                    if (isPlaying) return L.glify.Points.defaults.color();
+                    if (isPlaying && i === points.settings.data.length-1) {
+                        return {r: 0.66, g: 0, b: isNightTime ? 0.08 : 0, a: 1};
+                    }
+                    return {
+                        r: 0.66,
+                        g: 0,
+                        b: isNightTime ? 0.08 : 0,
+                        a: isPlaying ? 1-(currentMs - playTimes[i]) / (trailLength*60*60*1000) : 1
+                    };
+                },
                 click: (e, point) => {
                     if (!locData[point.toString()]) return;
                     var location = locData[point.toString()][0];
@@ -168,17 +191,19 @@
             	latitudeKey: 0,
             	longitudeKey: 1,
             	weight: 10,
-                // color: (i, feature) => {
-                //     if (isPlaying && i === lines.settings.data.features.length-1) {
-                //         return {r: 0.66, g: 0, b: isNightTime ? 0.08 : 0, a: 1};
-                //     }
-                //     return {
-                //         r: 0.66,
-                //         g: 0,
-                //         b: isNightTime ? 0.08 : 0,
-                //         a: isPlaying ? 1-(currentMs - playTimes[i]) / (trailLength*60*60*1000) : 1
-                //     };
-                // },
+                color: (i, feature) => {
+            	    // quickfix
+            	    if (isPlaying) return L.glify.Lines.defaults.color();
+                    if (isPlaying && i === lines.settings.data.features.length-1) {
+                        return {r: 0.66, g: 0, b: isNightTime ? 0.08 : 0, a: 1};
+                    }
+                    return {
+                        r: 0.66,
+                        g: 0,
+                        b: isNightTime ? 0.08 : 0,
+                        a: isPlaying ? 1-(currentMs - playTimes[i]) / (trailLength*60*60*1000) : 1
+                    };
+                },
             	click: (e, feature) => {
             		L.popup()
             			.setLatLng(e.latlng)
@@ -207,19 +232,38 @@
         // Change tabs
         $('body').removeClass('working');
         $('#working').addClass('hidden');
-        $('#done').removeClass('hidden');
+        //$('#done').removeClass('hidden');
 
         // Update count
         $('#numberProcessed').text(numberProcessed.toLocaleString());
 
-        $('#launch').click(function () {
+        //$('#launch').click(function () {
             $('body').addClass('map-active');
-            $('#done').fadeOut();
-        });
+        //    $('#done').fadeOut();
+        //});
 
+        initGui();
+        onPlay();
+    }
+
+    function onKeyPress(event) {
+        switch (event.key) {
+            case 'p':
+                togglePlay();
+                break;
+            case 'g':
+                toggleGui();
+                break;
+            case 'm':
+                toggleMap();
+                break;
+        }
+    }
+
+    function initGui() {
         $('#showMap').change(toggleMap);
-		$('#showPoints').change(renderPoints);
-		$('#showLines').change(renderLines);
+        $('#showPoints').change(renderPoints);
+        $('#showLines').change(renderLines);
         $('#update').click(onUpdate);
         $('#play').click(onPlay);
         $('#stop').click(onStop);
@@ -266,7 +310,22 @@
         });
     }
 
-	function toggleMap() {
+    function toggleGui() {
+        $("#ui").toggle();
+        $("#ui").accordion();
+    }
+
+    function togglePlay() {
+        if (isPlaying) {
+            onStop();
+        }
+        else {
+            onPlay();
+        }
+    }
+
+	function toggleMap(event) {
+        if (!event) $("#showMap")[0].checked = !$("#showMap")[0].checked;
 		$('.leaflet-tile-pane').css("visibility", $('#showMap').is(':checked') ? 'visible' : 'hidden');
 	}
 
@@ -301,33 +360,54 @@
         isPlaying = true;
         $("#play").hide();
         $("#stop").show();
-        var currentLoc = locData[pointsData[0].toString()][0];
-        playFrame(currentLoc, 0);
+        $("#seekbar").on('click', onSeek);
+        currentLoc = getFirstLoc();
+        startMs = currentLoc.timestampMs;
+        endMs = locData[pointsData[pointsData.length-1].toString()][0].timestampMs;
+        for (var i=0; i<locData[pointsData[pointsData.length-1].toString()].length; i++) {
+            if (locData[pointsData[pointsData.length-1].toString()][0].timestampMs > endMs) {
+                endMs = locData[pointsData[pointsData.length-1].toString()][0].timestampMs;
+            }
+        }
+        playPoints = [];
+        playTimes = [];
+        playFrame(0);
     }
 
-    function playFrame(currentLoc, time) {
-        var nextLoc = getNextPoint(currentLoc);
+    function playFrame(time) {
+        var nextLoc = getNextLoc(currentLoc);
         renderPoint(currentLoc, nextLoc, time);
         if (!nextLoc) {
-            onStop();
+            if (loopPlay) {
+                playInterval = setTimeout(function() {
+                    currentLoc = getFirstLoc();
+                    playPoints = [];
+                    playTimes = [];
+                    playFrame(0);
+                }, PLAY_UPDATE);
+            }
+            else {
+                onStop();
+            }
             return;
         }
         var ms = Math.max(0, Math.min(PLAY_UPDATE, (nextLoc.timestampMs - currentLoc.timestampMs) / (1000*60*60*24) * Math.max(1, playSpeed)));
         playInterval = setTimeout(function() {
             if ((time + ms) >= (nextLoc.timestampMs - currentLoc.timestampMs) / (1000*60*60*24) * Math.max(1, playSpeed)) {
-                playFrame(nextLoc, 0);
+                currentLoc = nextLoc;
+                playFrame(0);
             }
             else {
-                playFrame(currentLoc, time + ms);
+                playFrame(time + ms);
             }
         }, ms);
     }
 
     function renderPoint(currentLoc, nextLoc, time) {
-        var diff = (nextLoc.timestampMs - currentLoc.timestampMs);
+        var diff = nextLoc ? (nextLoc.timestampMs - currentLoc.timestampMs) : 0;
         var progress = time / (diff / (1000*60*60*24) * Math.max(1, playSpeed));
         currentMs = currentLoc.timestampMs + diff * progress;
-        var between = lerpLatLon(currentLoc.point, nextLoc.point, progress);
+        var between = lerpLatLon(currentLoc.point, nextLoc ? nextLoc.point : null, progress);
         if (!playPoints.length || between[0] !== playPoints[0][0] || between[1] !== playPoints[0][1]) {
             playPoints.push(between);
             playTimes.push(currentMs);
@@ -338,6 +418,7 @@
         }
         var currentTZ = tzlookup(playPoints[playPoints.length-1][0], playPoints[playPoints.length-1][1]);
         updateClock(currentMs, currentTZ);
+        updateTimeline(currentMs);
         renderPoints(playPoints);
         if (showLines) {
             var playLines = [{
@@ -355,20 +436,28 @@
             }];
             renderLines(playLines);
         }
-        map.fitBounds(playPoints, {padding: [100, 100], maxZoom: 14});
+        map.fitBounds(playPoints, {padding: [100, 100], maxZoom: 13});
     }
 
     function updateClock(ms, tz) {
         var date = new Date(ms);
         var tzDate = new Date(date.toLocaleString("en-US", {timeZone: tz}));
         clock(tzDate);
-        $("#currentDate").text(tzDate.toLocaleString());
+        $("#currentDate").text(tzDate.toLocaleString((navigator.languages && navigator.languages.length) ? navigator.languages[0] : navigator.userLanguage || navigator.language || navigator.browserLanguage || 'en'));
         $("#timezone").text(tz);
         isNightTime = tzDate.getHours() > 20 || tzDate.getHours() < 6;
         $(".visualizer").toggleClass("dark-mode", isNightTime);
     }
 
-    function getNextPoint(currentLoc) {
+    function updateTimeline(ms) {
+        $("#position").css("left", (ms - startMs) / (endMs - startMs) * 100 + '%');
+    }
+
+    function getFirstLoc() {
+        return locData[pointsData[0].toString()][0];
+    }
+
+    function getNextLoc(currentLoc) {
         var nextLoc = currentLoc.next;
         while (nextLoc && !nextLoc.point) {
             nextLoc = nextLoc.next;
@@ -376,13 +465,47 @@
         return nextLoc;
     }
 
+    function getPrevLoc(currentLoc) {
+        var prevLoc = currentLoc.prev;
+        while (prevLoc && !prevLoc.point) {
+            prevLoc = prevLoc.prev;
+        }
+        return prevLoc;
+    }
+
     function onStop() {
         isPlaying = false;
+        $("#seekbar").off('click', onSeek);
         $("#stop").hide();
         $("#play").show();
-        clearInterval(playInterval);
+        clearTimeout(playInterval);
         $(".visualizer").removeClass("dark-mode");
         onUpdate();
+    }
+
+    function onSeek(event) {
+        if (!isPlaying) return;
+        var offset = $('#seekbar').offset();
+        var x = event.pageX - offset.left;
+        var perc = x / $('#seekbar').width();
+        var ms = (endMs - startMs) * perc + startMs;
+        clearTimeout(playInterval);
+        if (ms > currentMs) {
+            while (currentLoc && ms > currentLoc.timestampMs) {
+                currentLoc = getNextLoc(currentLoc);
+            }
+        }
+        else {
+            while (currentLoc && ms < currentLoc.timestampMs) {
+                currentLoc = getPrevLoc(currentLoc);
+            }
+        }
+        if (!currentLoc) {
+            currentLoc = getFirstLoc();
+        }
+        playPoints = [];
+        playTimes = [];
+        playFrame(0);
     }
 
     function calcRounded(location) {
@@ -480,10 +603,7 @@
     	for (var p in locData) {
 			connections[p] = [];
     		for (var i=0; i<locData[p].length; i++) {
-    			var prev = locData[p][i].prev;
-    			while (prev && !prev.point) {
-					prev = prev.prev;
-				}
+    		    var prev = getPrevLoc(locData[p][i]);
 				if (prev && prev.point && connections[p].indexOf(prev.point) === -1) {
 					connections[p].push(prev.point);
 					var line = {

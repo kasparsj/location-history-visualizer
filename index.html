@@ -16,18 +16,18 @@
     <div class="container">
         <div class="content">
             <!-- Intro, before data has been uploaded -->
-            <div id="intro" class="content-box center-box">
+            <div id="intro" class="content-box center-box hidden">
                 <h2>Location History Visualizer</h2>
 
                 <p>Welcome to <b>Location History Visualizer</b>, a tool for visualizing your Google <a href="https://google.com/locationhistory" target="_blank">Location History</a> data. You can explore your location history over a specific time frame, for example during a roadtrip, which lets you recall all the places you have been to.</p>
-                    
+
                 <p><i>All processing and visualization happens directly on your computer, so your data stays under your control.</i></p>
 
                 <ol>
                     <li>To start, go to <a href="https://google.com/takeout" target="_blank">Google Takeout</a> to download your Location History data. On that page, select only "Location History", hit "Next" and, finally, click "Create export". This typically takes a few minutes. Once the archive has been created, download it and unzip it. Your data is in <code>Takeout/Location History/LocationHistory.json</code>.</li>
                     <li><b>Drag and drop</b> <code>LocationHistory.json</code> onto this page or <b>select</b> it directly: <input name="file" type="file" id="file"></input></li>
                 </ol>
-                    
+
                 <p class="credit">This is an <a target="_blank" href="https://github.com/operte/location-history-visualizer">open source project</a> written in 2020.</p>
             </div>
 
@@ -40,11 +40,11 @@
                     <div class="bounce3"></div>
                 </div>
 
-                <p><span id="currentStatus">Waking up...</span></p>
-                <p>Your data is being read by your computer, which might take a while.</p>
-                <p><i>Why does it take so long?</i> Depending on how long Google's been tracking your location, you may have hundreds of thousands of location measurements, every one of which must be loaded, analyzed, and plotted. That's a lot of data.</p>
+                <p><span id="currentStatus">Loading...</span></p>
+<!--                <p>Your data is being read by your computer, which might take a while.</p>-->
+<!--                <p><i>Why does it take so long?</i> Depending on how long Google's been tracking your location, you may have hundreds of thousands of location measurements, every one of which must be loaded, analyzed, and plotted. That's a lot of data.</p>-->
 
-                <p class="credit">This is an <a target="_blank" href="https://github.com/operte/location-history-visualizer">open source project</a> written in 2020.</p>
+<!--                <p class="credit">This is an <a target="_blank" href="https://github.com/operte/location-history-visualizer">open source project</a> written in 2020.</p>-->
             </div>
 
             <!-- Content displayed once processing complete -->
@@ -64,37 +64,50 @@
     <!-- The map, populated by leaflet.js -->
     <div id="map"></div>
 
-    <div id="clock">
-        <div id="currentDate"></div>
-        <div id="timezone"></div>
-        <div class="watch">
-            <span class="hours"></span>
-            <span class="minutes"></span>
-            <span class="seconds"></span>
+    <div id="timeline">
+        <div id="clock">
+            <div id="currentDate"></div>
+            <div id="timezone"></div>
+            <div class="watch">
+                <span class="hours"></span>
+                <span class="minutes"></span>
+                <span class="seconds"></span>
+            </div>
+        </div>
+        <div id="seekbar">
+            <div id="position"></div>
         </div>
     </div>
 
-    <div id="overlays">
-        <div id="ui" class="content-box">
+    <div id="ui">
+        <h3>Layers</h3>
+        <div>
+            todo...
+        </div>
+        <h3>Filtering</h3>
+        <div>
             <p>Start date: <input type="date" id="fromDate"> </p>
             <p>End date: <input type="date" id="toDate"></p>
             <p>Max accuracy: <input type="number" id="maxAccuracy" value="1000"></p>
             <p>Min data points: <input type="number" id="minData" value="0"></p>
             <p>Min times: <input type="number" id="minTimes" value="0"></p>
             <p>Rounding (km): <input type="number" id="rounding" value="0.5"></p>
+            <p>Exclude driving: <input type="checkbox" id="excludeDriving"></p>
+            <p>Total points: <span id="totalPoints"></span></p>
             <div class="btn-margin">
                 <button id="update">Update</button>
             </div>
-            <p>Min size: <input type="number" id="minSize" value="3"></p>
-            <p>Max size: <input type="number" id="maxSize" value="20"></p>
+        </div>
+        <h3>Rendering</h3>
+        <div>
+            <p>Min size: <input type="number" id="minSize" value="10"></p>
+            <p>Max size: <input type="number" id="maxSize" value="10"></p>
             <p>Divider: <input type="number" id="divider" value="10"></p>
             <p>Trail length (h): <input type="number" id="trailLength" value="12"></p>
-            <p>Day length (ms): <input type="number" id="playSpeed" value="1000"></p>
+            <p>Day length (ms): <input type="number" id="playSpeed" value="2000"></p>
             <p>Show map: <input type="checkbox" id="showMap" checked></p>
             <p>Show points: <input type="checkbox" id="showPoints" checked></p>
             <p>Show lines: <input type="checkbox" id="showLines" checked></p>
-            <p>Exclude driving: <input type="checkbox" id="excludeDriving" checked></p>
-            <p>Total points: <span id="totalPoints"></span></p>
             <div class="btn-margin">
                 <button id="play">Play</button>
                 <button id="stop">Stop</button>
